@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cosine Effect 2.0</title>
+
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.5.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.7/jquery-ui.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.js"></script>
+
+
+
+<style type="text/css">
+	
+	
+	.content{
+        
+        width:100%;
+        height:500px;
+        background-color:#E8E2E2;
+
+	}
+
+    span{
+        font-weight: bold;
+    }
+
+</style>
+</head>
+<body>
+
+
+<div class="content">
+
+<svg id="cosine" height="500" width="100%">
+  <line id="roadline" x1="0" y1="250" x2="100%" y2="250" style="stroke:rgb(0,0,0);stroke-width:3;fill:none;" />
+
+    <line id="carline" x1="100" y1="250" x2="80%" y2="250" style="stroke:rgb(0,0,0);stroke-width:2;fill:none;" />
+
+    <image id="car" x=50 y=200 width="100" height="100" xlink:href="www/images/car.png" style="fill:none;"/>
+   
+
+    <image id="camera" x=80% y=200 width="100" height="100" xlink:href="www/images/camera.png" style="fill:none;"/>
+
+    <path id="angleArc" fill="none" stroke="#446688" stroke-width="5" />
+
+    
+
+</svg>
+
+The car is travelling at <input type="number" name="carspeed" id="car_speed" value="60">, the measured speed by the speed camera is <span id="measuredSpeed"></span> due to the angle of <span id="cameraAngle"></span>
+
+</div>
+<script type="text/javascript">
+
+    $("document").ready(function(){
+
+
+        $('#camera').draggable()
+              .bind('mousedown', function(event, ui){
+                // bring target to front
+                $(event.target.parentElement).append( event.target );
+              })
+              .bind('drag', function(event, ui){
+
+                if((ui.position.left-50) >= 0){
+                    event.target.setAttribute('x', ui.position.left);
+                    event.target.setAttribute('y', ui.position.top);
+
+                $("#carline")[0].setAttribute('y2', ui.position.top+50);
+                 $("#carline")[0].setAttribute('x2', ui.position.left+50);
+
+                }
+
+                calculateAngle();
+
+              });
+
+
+        function calculateAngle(){
+
+            console.log("calculating angle");
+
+            var carline = $("#carline")[0];
+
+            var carline_x = parseInt(carline.getAttribute('x1'));
+            var carline_y = parseInt(carline.getAttribute('y1'));
+
+            var carline_x2 = parseInt(carline.getAttribute('x2'));
+            var carline_y2 = parseInt(carline.getAttribute('y2'));
+
+            var x = carline.getAttribute('x2') - carline.getAttribute('x1');
+            var y = carline.getAttribute('y2') - carline.getAttribute('y1');
+            var h = math.sqrt((math.pow(x,2)+math.pow(y,2)))
+            var ang_rad =  math.acos(x/h);
+            var cost = x/h;
+            var ang_deg = ang_rad * (180/math.pi);
+
+            console.log(carline_x, carline_y);
+            $("#angleArc").hide();
+            $("#angleLabel").hide();
+            
+            if(y < 0){
+
+               
+                $("#angleArc")[0].setAttribute("transform", "translate( 0,500) scale(1, -1)" );
+          
+                $("#angleArc").show();
+                $("#angleLabel").show();
+
+                $("#angleArc")[0].setAttribute("d", describeArc(carline_x, carline_y, 90, 90, ang_deg+90));
+
+            }else{
+                $("#angleArc")[0].removeAttribute("transform");
+          
+                $("#angleArc").show();
+                $("#angleLabel").show();
+
+                
+
+                $("#angleArc")[0].setAttribute("d", describeArc(carline_x, carline_y, 90, 90, ang_deg+90));
+
+            }
+
+            var measuredSp = ($("#car_speed").val()*cost);
+         
+            console.log(x, y, ang_deg, measuredSp);
+
+            $("#measuredSpeed").html(measuredSp.toFixed(2));
+            $("#cameraAngle").html(ang_deg.toFixed(2));
+
+
+        }
+
+
+// code from - http://jsbin.com/pewoyuwohe/edit?html,js,output
+     function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+  var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+
+  return {
+    x: centerX + (radius * Math.cos(angleInRadians)),
+    y: centerY + (radius * Math.sin(angleInRadians))
+  };
+}
+
+function describeArc(x, y, radius, startAngle, endAngle){
+
+    var start = polarToCartesian(x, y, radius, endAngle);
+    var end = polarToCartesian(x, y, radius, startAngle);
+
+    var arcSweep = endAngle - startAngle <= 180 ? "0" : "1";
+
+    var d = [
+        "M", start.x, start.y, 
+        "A", radius, radius, 0, arcSweep, 0, end.x, end.y
+    ].join(" ");
+
+    return d;       
+}
+
+
+
+    });
+
+
+</script>
+
+</body>
+</html>
