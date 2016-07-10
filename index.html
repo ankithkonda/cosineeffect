@@ -44,16 +44,57 @@
 
     <path id="angleArc" fill="none" stroke="#446688" stroke-width="5" />
 
+    <image id="camera_display" width="100" height="100" xlink:href="www/images/camera_display.png" style="fill:none;"/>
+
+    <text id="deg_label" x="300" y="300" style="">
+    </text>
+
+     <text id="measuredSpeed_label" x="300" y="300" style="text-anchor:middle;fill:white;">
+    </text>
+
+    <text id="measuredSpeed_label_title" x="300" y="300" style="text-anchor:middle;fill:white;font-weight:bold;">Measured
+    </text>
+
+    <text id="actualSpeed_label" x="100" y="210" style="text-anchor:middle;fill:black;">60 km/h
+    </text>
+
+    <text id="actualSpeed_label_title" x="100" y="190" style="text-anchor:middle;fill:black;font-weight:bold;">Actual
+    </text>
+
+     <text id="move_me_message" x="85%" y="190" style="text-anchor:middle;fill:red;font-weight:bold;">Drag me to begin
+    </text>
+
+
+
     
 
 </svg>
 
-The car is travelling at <input type="number" name="carspeed" id="car_speed" value="60">, the measured speed by the speed camera is <span id="measuredSpeed"></span> due to the angle of <span id="cameraAngle"></span>
+Please enter actual speed of the yellow car: <input type="number" name="carspeed"  min="1" max="99999" id="car_speed" value="60"> km/h
+<br/><br/>
+
+The measured speed by the speed camera is <span id="measuredSpeed">______ </span> km/h, due to the angle of <span id="cameraAngle"> _______ </span> &deg;
 
 </div>
 <script type="text/javascript">
 
+var started = false;
+   
+
     $("document").ready(function(){
+
+         $("#camera_display").hide();
+
+    $("#measuredSpeed_label").hide();
+    $("#measuredSpeed_label_title").hide();
+
+    $("#car_speed").keyup(function(event) {
+        /* Act on the event */
+        $("#actualSpeed_label").html(event.target.value+" km/h");
+                //console.log(event.target.value);
+             calculateAngle();
+
+    });
 
 
         $('#camera').draggable()
@@ -62,10 +103,27 @@ The car is travelling at <input type="number" name="carspeed" id="car_speed" val
                 $(event.target.parentElement).append( event.target );
               })
               .bind('drag', function(event, ui){
+                $("#move_me_message").hide();
+                started = true;
 
                 if((ui.position.left-50) >= 0){
                     event.target.setAttribute('x', ui.position.left);
                     event.target.setAttribute('y', ui.position.top);
+
+                    $("#camera_display")[0].setAttribute("x", ui.position.left+80);
+                    $("#camera_display")[0].setAttribute("y", ui.position.top-10);
+
+                    $("#camera_display").show();
+
+                $("#measuredSpeed_label").show();
+                $("#measuredSpeed_label_title").show();
+
+
+                $("#measuredSpeed_label")[0].setAttribute("x", ui.position.left+132);
+                $("#measuredSpeed_label")[0].setAttribute("y", ui.position.top+54);
+
+                $("#measuredSpeed_label_title")[0].setAttribute("x", ui.position.left+132);
+                $("#measuredSpeed_label_title")[0].setAttribute("y", ui.position.top+34);
 
                 $("#carline")[0].setAttribute('y2', ui.position.top+50);
                  $("#carline")[0].setAttribute('x2', ui.position.left+50);
@@ -79,7 +137,8 @@ The car is travelling at <input type="number" name="carspeed" id="car_speed" val
 
         function calculateAngle(){
 
-            console.log("calculating angle");
+            if(started){
+            //console.log("calculating angle");
 
             var carline = $("#carline")[0];
 
@@ -96,14 +155,34 @@ The car is travelling at <input type="number" name="carspeed" id="car_speed" val
             var cost = x/h;
             var ang_deg = ang_rad * (180/math.pi);
 
-            console.log(carline_x, carline_y);
+            //console.log(carline_x, carline_y);
             $("#angleArc").hide();
             $("#angleLabel").hide();
+
+            var op = math.sin(ang_rad/2)*90;
+            var adj = math.cos(ang_rad/2)*90;
+            var adj_diff = 90 - adj;
+
+            var hyp = math.sqrt((math.pow(adj_diff,2)+math.pow(op,2)));
+
+            // carline_x+adj, carline_y-op
+
+            // carline_x+90, carline_y
+
+
+            var midp_x = (carline_x+adj+carline_x+90)/2;
+            var midp_y = (carline_y-op+carline_y)/2;
+
+
+        
+
             
             if(y < 0){
 
                
                 $("#angleArc")[0].setAttribute("transform", "translate( 0,500) scale(1, -1)" );
+
+
           
                 $("#angleArc").show();
                 $("#angleLabel").show();
@@ -116,7 +195,8 @@ The car is travelling at <input type="number" name="carspeed" id="car_speed" val
                 $("#angleArc").show();
                 $("#angleLabel").show();
 
-                
+                var midp_y = (carline_y+op+20+carline_y)/2;
+
 
                 $("#angleArc")[0].setAttribute("d", describeArc(carline_x, carline_y, 90, 90, ang_deg+90));
 
@@ -124,13 +204,30 @@ The car is travelling at <input type="number" name="carspeed" id="car_speed" val
 
             var measuredSp = ($("#car_speed").val()*cost);
          
-            console.log(x, y, ang_deg, measuredSp);
+            //console.log(x, y, ang_deg, measuredSp);
+
+            $("#deg_label").html(ang_deg.toFixed(2)+" \xB0");
+            $("#measuredSpeed_label").html(measuredSp.toFixed(2)+" km/h");
 
             $("#measuredSpeed").html(measuredSp.toFixed(2));
             $("#cameraAngle").html(ang_deg.toFixed(2));
 
 
+            $("#deg_label")[0].setAttribute("x", midp_x+20);
+            $("#deg_label")[0].setAttribute("y", midp_y);
+            
+            
+
+
+
         }
+
+
+
+        }
+
+
+       
 
 
 // code from - http://jsbin.com/pewoyuwohe/edit?html,js,output
